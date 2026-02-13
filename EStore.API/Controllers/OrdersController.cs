@@ -104,7 +104,89 @@ namespace EStore.API.Controllers
             });
             return Ok(response);
         }
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAllOrders()
+        {
+            var orders = await _context.Orders
+               .Include(o => o.User)
+                .Include(o => o.Items)
+                .ThenInclude(oi => oi.Product)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+            var response = orders.Select(o => new OrderResponseDto
+            {
+                OrderId = o.Id,
+                OrderDate = o.OrderDate,
+                TotalAmount = o.TotalAmount,
 
+                Items = o.Items.Select(oi => new OrderItemResponseDto
+                {
+                    ProductName = oi.Product.Name,
+                    Quantity = oi.Quantity,
+                    unitPrice = oi.Price,
+                    subTotal = oi.Quantity * oi.Price
+                }).ToList()
+            });
+            return Ok(response);
+
+        }
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetorderByid( int id)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized();
+
+            }
+            int userId = int.Parse(userIdClaim);
+            //get Role from JWT
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+            
+            Order order;
+
+            if (role == "Admin")
+            {
+                order = await _context.Orders
+                    .Include(o => o.Items)
+                    .ThenInclude(i => i.Product)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+                
+                
+
+
+            }
+
+            else
+            {
+                order = await _context.Orders
+                      .Include(o => o.Items)
+                      .ThenInclude(i => i.Product)
+                      .FirstOrDefaultAsync(o => o.Id == id && 
+                      o.UserId==userId);
+
+            }
+            if (order == null)
+            {
+                return NotFound("order not found");
+            }
+            var response = new OrderResponseDto
+            {
+                OrderId = order.Id,
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                Items = order.Items.Select(oi => new OrderItemResponseDto
+                {
+                    ProductName = oi.Product.Name,
+                    Quantity = oi.Quantity,
+                    unitPrice = oi.Price,
+                    subTotal = oi.Quantity * oi.Price
+                }).ToList()
+            };
+            return Ok(response);
+
+        }
     }
 }
     
