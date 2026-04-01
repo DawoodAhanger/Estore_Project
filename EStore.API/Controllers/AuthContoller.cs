@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EStore.API.Controllers
 {
+    [Route("api")]
+    [ApiController]
     public class AuthContoller : Controller
     {
         private readonly AppDbContext _context;
