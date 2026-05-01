@@ -44,8 +44,7 @@ namespace EStore.API.Controllers
             }
             await _context.SaveChangesAsync();
 
-
-            return Ok("Item added to cart sucessfully");
+            return Ok(new { message = "Item added to cart" });
         }
         //get cart items
         [HttpGet]
@@ -101,7 +100,7 @@ namespace EStore.API.Controllers
             }
             cart.Items.Remove(item);
             await _context.SaveChangesAsync();
-            return Ok("Item removed from cart successfully");
+            return Ok(new { message = "Item removed sucessfully" });
         }
         [HttpPost("checkout")]
         public async Task<IActionResult> Checkout()
